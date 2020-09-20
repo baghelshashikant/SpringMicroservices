@@ -1,5 +1,6 @@
 package io.javabrains.moviecatalogservice.resource;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 import io.javabrains.moviecatalogservice.model.Catalogitem;
 import io.javabrains.moviecatalogservice.model.Movie;
@@ -32,6 +35,7 @@ public class MovieCatalogResource {
 	 */
 
 	@RequestMapping("/{userId}")
+	@HystrixCommand(fallbackMethod = "getFallBack")
 	public List<Catalogitem> getCatalog(@PathVariable("userId") String userId) {
 
 		// RestTemplate restTemplate = new RestTemplate();
@@ -52,20 +56,26 @@ public class MovieCatalogResource {
 		 * parameterizedTypeReference.getClass());
 		 */
 
-		//UserRating userRating = restTemplate.getForObject("http://localhost:8085/ratingsdata/" + userId,UserRating.class);
-		
-		//Calling service discovery getting actual url by passing micro service name   
-		UserRating userRating = restTemplate.getForObject("http://ratings-data-service/ratingsdata/" + userId,UserRating.class);
+		// UserRating userRating =
+		// restTemplate.getForObject("http://localhost:8085/ratingsdata/" +
+		// userId,UserRating.class);
+
+		// Calling service discovery getting actual url by passing micro service name
+		UserRating userRating = restTemplate.getForObject("http://ratings-data-service/ratingsdata/" + userId,
+				UserRating.class);
 
 		// FOR EACH MOVIE ID ,CALL MOVIE INFO SERVICE AND GET DETAILS
-		// ratings.stream().map(rating -> new Catalogitem("Avangers", "Avangers Film",4))
+		// ratings.stream().map(rating -> new Catalogitem("Avangers", "Avangers
+		// Film",4))
 		// .collect(Collectors.toList());
 
 		return userRating.getUserRating().stream().map(rating -> {
-			
-			//Movie movie = restTemplate.getForObject("http://localhost:8084/movies/" + rating.getMovieid(), Movie.class);
-			
-			Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieid(), Movie.class);
+
+			// Movie movie = restTemplate.getForObject("http://localhost:8084/movies/" +
+			// rating.getMovieid(), Movie.class);
+
+			Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieid(),
+					Movie.class);
 			/*
 			 * Movie movie=webClientBuilder.build() .get()
 			 * .uri("http://localhost:8084/movies/" + rating.getMovieid()) .retrieve()
@@ -76,6 +86,11 @@ public class MovieCatalogResource {
 		}).collect(Collectors.toList());
 
 		// put all together
-		// return Collections.singletonList(new Catalogitem("Avangers", "Marvel Movie", 9));
+		// return Collections.singletonList(new Catalogitem("Avangers", "Marvel Movie",
+		// 9));
+	}
+
+	public List<Catalogitem> getFallBack(@PathVariable("userId") String userId) {
+		return Arrays.asList(new Catalogitem("No Movies", "", 0));
 	}
 }
