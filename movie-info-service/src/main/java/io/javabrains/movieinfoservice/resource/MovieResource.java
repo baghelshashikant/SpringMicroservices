@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.javabrains.movieinfoservice.model.Movie;
 
 @RestController
-@RequestMapping("/movies")
+@RequestMapping("/movie")
 public class MovieResource {
 
 	@RequestMapping("/{movieId}")

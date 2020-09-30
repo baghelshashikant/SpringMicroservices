@@ -30,4 +30,9 @@ public class Rating {
 		this.rating = rating;
 	}
 
+	@Override
+	public String toString() {
+		return "Rating [movieid=" + movieid + ", rating=" + rating + "]";
+	}
+
 }

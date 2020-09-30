@@ -38,4 +38,9 @@ public class UserRating {
 		this.userRating = userRating;
 	}
 
+	@Override
+	public String toString() {
+		return "UserRating [userId=" + userId + ", userName=" + userName + ", userRating=" + userRating + "]";
+	}
+
 }

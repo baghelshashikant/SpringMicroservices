@@ -18,6 +18,8 @@ import io.javabrains.moviecatalogservice.model.Catalogitem;
 import io.javabrains.moviecatalogservice.model.Movie;
 import io.javabrains.moviecatalogservice.model.Rating;
 import io.javabrains.moviecatalogservice.model.UserRating;
+import io.javabrains.moviecatalogservice.service.MovieInfoService;
+import io.javabrains.moviecatalogservice.service.UserRatingInfoService;
 
 @RestController
 @RequestMapping("/catalog")
@@ -26,6 +28,11 @@ public class MovieCatalogResource {
 	@Autowired
 	private RestTemplate restTemplate;
 
+	@Autowired
+	MovieInfoService movieinfosrvice;
+
+	@Autowired
+	UserRatingInfoService userRatingInfoService;
 	/*
 	 * @Autowired private WebClient.Builder webClientBuilder;
 	 */
@@ -62,25 +69,25 @@ public class MovieCatalogResource {
 		// userId,UserRating.class);
 
 		// Calling service discovery getting actual url by passing micro service name
-		UserRating userRating = getUserRating(userId);
+		UserRating userRating = userRatingInfoService.getUserRating(userId);
 
 		// FOR EACH MOVIE ID ,CALL MOVIE INFO SERVICE AND GET DETAILS
 		// ratings.stream().map(rating -> new Catalogitem("Avangers", "Avangers
 		// Film",4))
 		// .collect(Collectors.toList());
 
-		return userRating.getUserRating().stream().map(rating -> 
+		return userRating.getUserRating().stream().map(rating ->
 
-			// Movie movie = restTemplate.getForObject("http://localhost:8084/movies/" +
-			// rating.getMovieid(), Movie.class);
-			
-			/*
-			 * Movie movie=webClientBuilder.build() .get()
-			 * .uri("http://localhost:8084/movies/" + rating.getMovieid()) .retrieve()
-			 * .bodyToMono(Movie.class) .block();
-			 */
+		// Movie movie = restTemplate.getForObject("http://localhost:8084/movies/" +
+		// rating.getMovieid(), Movie.class);
 
-			 getcatalogItem(rating)
+		/*
+		 * Movie movie=webClientBuilder.build() .get()
+		 * .uri("http://localhost:8084/movies/" + rating.getMovieid()) .retrieve()
+		 * .bodyToMono(Movie.class) .block();
+		 */
+
+		movieinfosrvice.getcatalogItem(rating)
 
 		).collect(Collectors.toList());
 
@@ -88,32 +95,10 @@ public class MovieCatalogResource {
 		// return Collections.singletonList(new Catalogitem("Avangers", "Marvel Movie",
 		// 9));
 	}
-	@HystrixCommand(fallbackMethod = "getcatalogItemFallBack")
-	private Catalogitem getcatalogItem(Rating rating) {
-		Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieid(),
-				Movie.class);
-		
-		return new Catalogitem(movie.getName(), movie.getDesc(), rating.getRating());
-	}
-	public Catalogitem getcatalogItemFallBack(Rating rating) {
-	       return new Catalogitem("Movie name not found", "",rating.getRating() );
-	}
-	
-	@HystrixCommand(fallbackMethod = "getUserRatingFallBack")
-	private UserRating getUserRating(String userId) {
-		UserRating userRating = restTemplate.getForObject("http://ratings-data-service/ratingsdata/" + userId,
-				UserRating.class);
-		return userRating;
-	}
-	
-	public UserRating getUserRatingFallBack(String userId) {
-		UserRating userRating=new UserRating();
-		userRating.setUserId(userId);
-		userRating.setUserRating(Arrays.asList(new Rating("0", 0)));
-		return userRating;
-	}
-	/*No need of it as both method have its own fallback
-	 * public List<Catalogitem> getFallBack(@PathVariable("userId") String userId) {
-	 * return Arrays.asList(new Catalogitem("No Movies", "", 0)); }
+
+	/*
+	 * No need of it as both method have its own fallback public List<Catalogitem>
+	 * getFallBack(@PathVariable("userId") String userId) { return Arrays.asList(new
+	 * Catalogitem("No Movies", "", 0)); }
 	 */
 }
